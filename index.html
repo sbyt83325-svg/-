@@ -114,6 +114,7 @@
     font-size: 13px;
     color: var(--text-muted);
     font-weight: 500;
+    padding: 0 10px;
   }
 
   @keyframes spin { 
@@ -243,7 +244,7 @@
     if (tg.setBackgroundColor) tg.setBackgroundColor("#070b14");
   }
 
-  // All Direct Links Provided (Will rotate infinitely on every visit)
+  // All Direct Links Pool
   const directLinks = [
     "https://uplcm.com/4/12168573",
     "https://uplcm.com/4/12168574",
@@ -255,7 +256,7 @@
     "https://uplcm.com/4/12168575"
   ];
 
-  // Get Rotated Direct Link
+  // Rotate Direct Links Infinitely
   function getRotatedDirectLink() {
     let index = parseInt(localStorage.getItem('ad_rotation_index') || '0', 10);
     const link = directLinks[index % directLinks.length];
@@ -281,39 +282,46 @@
     }
   }
 
-  // Initialize Ad & Direct Link Rotation Flow
+  // Initialize Ads and Smart Countdown Flow
   async function initAdFlow() {
-    // Automatically open the rotated direct link
-    const selectedLink = getRotatedDirectLink();
-    try {
-      window.open(selectedLink, '_blank');
-    } catch (err) {
-      console.log("Direct link open error:", err);
-    }
+    let adTriggered = false;
 
-    // Trigger Popup Ads sequentially using all 4 rewarded functions
+    // 1. Try triggering Rewarded Popup Ads sequentially based on visit rotation
     try {
       let adIndex = parseInt(localStorage.getItem('popup_ad_index') || '0', 10);
       let remainder = adIndex % 4;
 
       if (remainder === 0 && typeof show_12137615 === 'function') {
         show_12137615('pop').then(() => {}).catch(e => {});
+        adTriggered = true;
       } else if (remainder === 1 && typeof show_12137605 === 'function') {
         show_12137605('pop').then(() => {}).catch(e => {});
+        adTriggered = true;
       } else if (remainder === 2 && typeof show_12137608 === 'function') {
         show_12137608('pop').then(() => {}).catch(e => {});
-      } else {
-        if (typeof show_12137631 === 'function') {
-          show_12137631('pop').then(() => {}).catch(e => {});
-        }
+        adTriggered = true;
+      } else if (typeof show_12137631 === 'function') {
+        show_12137631('pop').then(() => {}).catch(e => {});
+        adTriggered = true;
       }
 
       localStorage.setItem('popup_ad_index', (adIndex + 1).toString());
     } catch (e) {
-      console.log("Ad trigger warning:", e);
+      console.log("Popup ad trigger warning:", e);
     }
 
-    // 16 Seconds Countdown Timer
+    // 2. If Popup didn't trigger or as primary fallback, open Direct Link automatically
+    if (!adTriggered) {
+      try {
+        const selectedLink = getRotatedDirectLink();
+        window.open(selectedLink, '_blank');
+        adTriggered = true;
+      } catch (err) {
+        console.log("Direct link open error:", err);
+      }
+    }
+
+    // 3. 16 Seconds Mandatory Countdown Timer (Ensures user views ad and waits)
     let timeLeft = 16;
     const spinnerTimerText = document.getElementById("spinnerText");
 
